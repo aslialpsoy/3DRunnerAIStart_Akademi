@@ -5,9 +5,20 @@ using UnityEngine.SceneManagement;
 
 public class CheckCollisions : MonoBehaviour
 {
-    public CollectCoin collectCoin;
+    //public CollectCoin collectCoin;
 	public PlayerController playerController;
 	public GameObject RestartPanel;
+	Vector3 PlayerStartPos;
+	public GameObject speedBoosterIcon;
+	//public GameManager gameManager;
+	private InGameRanking ig;
+
+	private void Start()
+	{
+		PlayerStartPos = new Vector3(transform.position.x, transform.position.y, transform.position.z);
+		speedBoosterIcon.SetActive(false);
+		ig = FindObjectOfType<InGameRanking>();
+	}
 
 	public void RestartGame()
 	{
@@ -16,38 +27,47 @@ public class CheckCollisions : MonoBehaviour
 
 	private void OnTriggerEnter(Collider other)
 	{
-		if (other.CompareTag("coin"))
-		{
-            collectCoin.AddCoin();
-            Destroy(other.gameObject);
-		}
 		if (other.CompareTag("finish"))
 		{
-			if (collectCoin.score >= 54)
+			if(ig.namesTxt[6].text == "Character")
 			{
-				//Debug.Log("You Win!..");
-				playerController.runningSpeed = 0f;
-				playerController.PlayerAnim.SetBool("win", true);
-				transform.Rotate(transform.rotation.x, 180, transform.rotation.z, Space.Self);
-				RestartPanel.SetActive(true);
-			}
-			else
+				PlayerFinished();
+				Debug.Log("You Win!..");
+			}else
 			{
-				//Debug.Log("You Lose!..");
-				playerController.runningSpeed = 0f;
-				playerController.PlayerAnim.SetBool("lose", true);
-				transform.Rotate(transform.rotation.x, 180, transform.rotation.z, Space.Self);
-				RestartPanel.SetActive(true);
+				PlayerFinished();
+				Debug.Log("You Lost!..");
 			}
+		}	
+		if(other.CompareTag("speedboost"))
+		{
+			playerController.runningSpeed = playerController.runningSpeed + 3f;
+			speedBoosterIcon.SetActive(true);
+			StartCoroutine(SlowAfterAWhileCoroutine());
 		}
 	}
-
+	
+	void PlayerFinished()
+	{
+		playerController.runningSpeed = 0f;
+		transform.Rotate(transform.rotation.x, 180, transform.rotation.z, Space.Self);
+		RestartPanel.SetActive(true);
+		GameManager.instance.isGameOver = true;
+	}
+	
 	private void OnCollisionEnter(Collision collision)
 	{
 		if (collision.collider.CompareTag("obstacle"))
 		{
-			SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+			//SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+			transform.position = PlayerStartPos;
 		}
+	}
+	private IEnumerator SlowAfterAWhileCoroutine()
+	{
+		yield return new WaitForSeconds(2.0f);
+		playerController.runningSpeed = playerController.runningSpeed - 3f;
+		speedBoosterIcon.SetActive(false);
 	}
 
 }
